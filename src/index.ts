@@ -9,3 +9,4 @@ export {
 export type { Runner, RunnerConfig } from "./config.js";
 export { setTool } from "./tools.js";
 export { toolCommand, toolCommandText } from "./command.js";
+export { runnerAvailable, chooseRunner, NO_BUN_WARNING } from "./choose.js";
