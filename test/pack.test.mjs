@@ -20,3 +20,8 @@ test("the package has no runtime dependencies", () => {
   const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
   assert.deepEqual(Object.keys(pkg.dependencies ?? {}), []);
 });
+
+test("the package is published with public access", () => {
+  const pkg = JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8"));
+  assert.equal(pkg.publishConfig.access, "public");
+});
