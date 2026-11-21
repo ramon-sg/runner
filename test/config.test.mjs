@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import {
@@ -181,4 +181,60 @@ test("runner.schema.json accepts the example and rejects bad files", () => {
   assert.ok(!validate(schema, { tools: { "Bad Name": "1.0.0" } }));
   assert.ok(!validate(schema, { tools: { x: "1.0.0+build" } }));
   assert.ok(!validate(schema, { tools: [] }));
+});
+
+test("versions with leading zeros are rejected, plain ones accepted", () => {
+  for (const bad of ["01.02.03", "1.02.0", "1.0.00"]) {
+    const root = tmp();
+    put(root, JSON.stringify({ tools: { x: bad } }));
+    assert.throws(() => readRunnerConfig(root), RunnerFileError, bad);
+  }
+  for (const good of ["0.0.0", "10.20.30", "1.0.0-rc.1"]) {
+    const root = tmp();
+    put(root, JSON.stringify({ tools: { x: good } }));
+    assert.equal(readRunnerConfig(root).tools.x, good);
+  }
+});
+
+test("the schema patterns equal the source regexes", async () => {
+  const { SEMVER, PACKAGE_NAME } = await import("../dist/config.js");
+  const schema = JSON.parse(readFileSync(new URL("../runner.schema.json", import.meta.url), "utf8"));
+  assert.equal(schema.properties.tools.additionalProperties.pattern, SEMVER.source);
+  assert.equal(schema.properties.tools.propertyNames.pattern, PACKAGE_NAME.source);
+});
+
+test("writeRunnerConfig rejects invalid configs and writes nothing", () => {
+  const bad = [
+    { runner: "deno", tools: {}, extra: {} },
+    { runner: null, tools: { x: "^1.0.0" }, extra: {} },
+    { runner: null, tools: { "Bad Name": "1.0.0" }, extra: {} },
+    { runner: null, tools: { x: 1 }, extra: {} },
+  ];
+  for (const config of bad) {
+    const root = tmp();
+    assert.throws(() => writeRunnerConfig(root, config), TypeError);
+    assert.equal(readRunnerConfig(root), null);
+  }
+});
+
+test("an extra __proto__ key round-trips as an own property", () => {
+  const root = tmp();
+  put(root, '{"__proto__": {"a": 1}, "tools": {}}');
+  const config = readRunnerConfig(root);
+  assert.ok(Object.hasOwn(config.extra, "__proto__"));
+  writeRunnerConfig(root, config);
+  assert.match(readFileSync(join(root, RUNNER_FILE), "utf8"), /"__proto__": \{/);
+  assert.ok(Object.hasOwn(readRunnerConfig(root).extra, "__proto__"));
+});
+
+test("a leading BOM is ignored", () => {
+  const root = tmp();
+  put(root, '﻿{"runner": "node"}');
+  assert.equal(readRunnerConfig(root).runner, "node");
+});
+
+test("writeRunnerConfig leaves no temp files behind", () => {
+  const root = tmp();
+  writeRunnerConfig(root, { runner: "bun", tools: {}, extra: {} });
+  assert.deepEqual(readdirSync(join(root, ".agents")), ["runner.json"]);
 });

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { VERSION } from "./version.js";
 
@@ -15,8 +15,8 @@ export interface RunnerConfig {
 export const SCHEMA_URL = `https://cdn.jsdelivr.net/npm/@ramon-sg/runner@${VERSION}/runner.schema.json`;
 
 /** An exact semver version: release plus an optional prerelease, no build metadata. */
-export const SEMVER = /^(\d+)\.(\d+)\.(\d+)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?$/;
-const PACKAGE_NAME = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+export const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?$/;
+export const PACKAGE_NAME = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
 
 export function isExactVersion(v: string): boolean {
   return SEMVER.test(v);
@@ -46,7 +46,7 @@ export function readRunnerConfig(root: string): RunnerConfig | null {
   if (!existsSync(file)) return null;
   let data: unknown;
   try {
-    data = JSON.parse(readFileSync(file, "utf8"));
+    data = JSON.parse(readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
   } catch (err) {
     throw new RunnerFileError(file, `cannot read or parse: ${(err as Error).message}`);
   }
@@ -78,20 +78,35 @@ export function readRunnerConfig(root: string): RunnerConfig | null {
   return { runner: runner ?? null, tools: parsedTools, extra };
 }
 
-/** Writes `.agents/runner.json` under `root`, creating `.agents/` if needed. */
+/** Writes `.agents/runner.json` under `root`, creating `.agents/` if needed. Throws `TypeError` on a config the reader would reject. */
 export function writeRunnerConfig(root: string, config: RunnerConfig): void {
+  const { runner, tools: configTools } = config;
+  if (runner !== null && runner !== "bun" && runner !== "node") {
+    throw new TypeError(`runner must be null, "bun" or "node", got ${JSON.stringify(runner)}`);
+  }
+  for (const [name, version] of Object.entries(configTools)) {
+    if (!isPackageName(name)) throw new TypeError(`"${name}" is not a valid package name`);
+    if (typeof version !== "string" || !isExactVersion(version)) {
+      throw new TypeError(`tool "${name}" must be an exact version like "1.2.3", got ${JSON.stringify(version)}`);
+    }
+  }
+
   const file = join(root, RUNNER_FILE);
-  const out: Record<string, unknown> = { $schema: SCHEMA_URL };
-  if (config.runner !== null) out.runner = config.runner;
-  const tools: Record<string, string> = {};
-  for (const name of Object.keys(config.tools).sort()) tools[name] = config.tools[name];
+  // No prototype, so an extra key named `__proto__` stays an own property.
+  const out: Record<string, unknown> = Object.create(null);
+  out.$schema = SCHEMA_URL;
+  if (runner !== null) out.runner = runner;
+  const tools: Record<string, string> = Object.create(null);
+  for (const name of Object.keys(configTools).sort()) tools[name] = configTools[name];
   out.tools = tools;
   for (const [key, value] of Object.entries(config.extra)) {
     if (key === "$schema" || key === "runner" || key === "tools") continue;
     out[key] = value;
   }
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, JSON.stringify(out, null, 2) + "\n");
+  const temp = `${file}.${process.pid}.tmp`;
+  writeFileSync(temp, JSON.stringify(out, null, 2) + "\n");
+  renameSync(temp, file);
 }
 
 /** The runner to use: the configured one, or Bun by default. */
