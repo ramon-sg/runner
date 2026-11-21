@@ -115,3 +115,22 @@ test("checkToolPins fails when runner.json is missing or invalid", () => {
   assert.deepEqual(invalid.map((c) => c.status), ["fail"]);
   assert.match(invalid[0].detail, /cannot read or parse/);
 });
+
+test("checkToolPins ignores longer or scoped names that end with the package", () => {
+  const root = project({ tools: { [PKG]: "0.6.0" } });
+  const checks = checkToolPins(root, PKG, [`my-${PKG}@2.0.0`, `@other/${PKG}@3.0.0`]);
+  assert.deepEqual(checks.map((c) => c.status), ["ok"]);
+});
+
+test("checkToolPins accepts a version followed by a sentence period, not a longer one", () => {
+  const root = project({ tools: { [PKG]: "0.7.0" } });
+  assert.deepEqual(checkToolPins(root, PKG, [`use ${PKG}@0.7.0.`]).map((c) => c.status), ["ok"]);
+  assert.deepEqual(checkToolPins(root, PKG, [`${PKG}@0.7.0.1`]).map((c) => c.status), ["fail"]);
+  const beta = project({ tools: { [PKG]: "0.6.0" } });
+  assert.deepEqual(checkToolPins(beta, PKG, [`${PKG}@0.6.0-beta`]).map((c) => c.status), ["fail"]);
+});
+
+test("checkToolPins treats Object.prototype names as missing", () => {
+  const root = project({ tools: {} });
+  assert.deepEqual(checkToolPins(root, "constructor", ["constructor@1.0.0"]).map((c) => c.status), ["fail"]);
+});
