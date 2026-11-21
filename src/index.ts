@@ -11,3 +11,5 @@ export { setTool } from "./tools.js";
 export { toolCommand, toolCommandText } from "./command.js";
 export { runnerAvailable, chooseRunner, NO_BUN_WARNING } from "./choose.js";
 export { writeScripts } from "./scripts.js";
+export { checkRunner, checkToolPins } from "./checks.js";
+export type { Check } from "./checks.js";
