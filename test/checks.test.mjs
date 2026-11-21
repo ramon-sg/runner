@@ -132,5 +132,7 @@ test("checkToolPins accepts a version followed by a sentence period, not a longe
 
 test("checkToolPins treats Object.prototype names as missing", () => {
   const root = project({ tools: {} });
+  // With no text naming it, an inherited `tools.constructor` would read as pinned.
+  assert.deepEqual(checkToolPins(root, "constructor", []).map((c) => c.status), ["fail"]);
   assert.deepEqual(checkToolPins(root, "constructor", ["constructor@1.0.0"]).map((c) => c.status), ["fail"]);
 });

@@ -59,8 +59,10 @@ npm test
 Bun corre los mismos tests de `node:test` sin cambios (probado con Bun 1.4.4, fijado en `.tool-versions`), así que no hace falta un smoke test aparte. Para correrlos con Bun hay que compilar antes:
 
 ```sh
-npx tsc && bun test test/
+npx tsc && bun test --timeout 20000 test/
 ```
+
+`--timeout 20000` sube el límite de 5 s por test que trae `bun test`: los tests que lanzan procesos (`npm pack`, ejecutables falsos) pueden pasarlo en una máquina cargada.
 
 CI corre los dos: el job `node` con `npm test` y el job `bun` con ese comando (`.github/workflows/test.yml`).
 

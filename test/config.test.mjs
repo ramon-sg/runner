@@ -238,3 +238,12 @@ test("writeRunnerConfig leaves no temp files behind", () => {
   writeRunnerConfig(root, { runner: "bun", tools: {}, extra: {} });
   assert.deepEqual(readdirSync(join(root, ".agents")), ["runner.json"]);
 });
+
+test("a failed write leaves no temp file behind", () => {
+  const root = tmp();
+  // A directory where the file should go makes the final rename fail.
+  mkdirSync(join(root, ".agents", "runner.json"), { recursive: true });
+  assert.throws(() => writeRunnerConfig(root, { runner: "bun", tools: {}, extra: {} }));
+  assert.deepEqual(readdirSync(join(root, ".agents")), ["runner.json"]);
+  rmSync(root, { recursive: true, force: true });
+});

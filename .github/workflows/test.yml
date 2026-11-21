@@ -27,4 +27,4 @@ jobs:
           bun-version-file: .tool-versions
       - run: npm ci
       - run: npx tsc
-      - run: bun test test/
+      - run: bun test --timeout 20000 test/

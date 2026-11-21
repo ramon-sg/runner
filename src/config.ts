@@ -1,4 +1,5 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { writeAtomic } from "./write.js";
 import { dirname, join, resolve } from "node:path";
 import { VERSION } from "./version.js";
 
@@ -104,9 +105,7 @@ export function writeRunnerConfig(root: string, config: RunnerConfig): void {
     out[key] = value;
   }
   mkdirSync(dirname(file), { recursive: true });
-  const temp = `${file}.${process.pid}.tmp`;
-  writeFileSync(temp, JSON.stringify(out, null, 2) + "\n");
-  renameSync(temp, file);
+  writeAtomic(file, JSON.stringify(out, null, 2) + "\n");
 }
 
 /** The runner to use: the configured one, or Bun by default. */

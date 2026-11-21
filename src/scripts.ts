@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { writeAtomic } from "./write.js";
 import { join } from "node:path";
 import type { Runner } from "./config.js";
 
@@ -22,12 +23,6 @@ function packageManagerField(runner: Runner): string | null {
 function detectIndent(text: string): string {
   const match = /^([ \t]+)\S/m.exec(text);
   return match ? match[1] : "  ";
-}
-
-function writeAtomic(file: string, content: string): void {
-  const temp = `${file}.${process.pid}.tmp`;
-  writeFileSync(temp, content);
-  renameSync(temp, file);
 }
 
 /**
