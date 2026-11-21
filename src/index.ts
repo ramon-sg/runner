@@ -7,3 +7,4 @@ export {
   effectiveRunner,
 } from "./config.js";
 export type { Runner, RunnerConfig } from "./config.js";
+export { setTool } from "./tools.js";
