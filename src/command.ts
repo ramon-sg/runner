@@ -1,6 +1,6 @@
 import type { Runner } from "./config.js";
 
-const SAFE_ARGUMENT = /^[A-Za-z0-9_@%+=:,./-]+$/;
+const SAFE_ARGUMENT = /^[A-Za-z0-9_@%+:,./-][A-Za-z0-9_@%+=:,./-]*$/;
 
 /** Quotes one argument for a POSIX shell, only when it needs it. */
 function shellQuote(argument: string): string {

@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Runner } from "./config.js";
 
@@ -24,6 +24,12 @@ function detectIndent(text: string): string {
   return match ? match[1] : "  ";
 }
 
+function writeAtomic(file: string, content: string): void {
+  const temp = `${file}.${process.pid}.tmp`;
+  writeFileSync(temp, content);
+  renameSync(temp, file);
+}
+
 /**
  * Writes the shortcuts of a tool into `package.json` under `root`. A script is
  * the tool's own when its command contains `owned`: those are replaced; any
@@ -43,11 +49,11 @@ export function writeScripts(
     const manager = packageManagerField(runner);
     if (manager !== null) out.packageManager = manager;
     out.scripts = { ...scripts };
-    writeFileSync(file, JSON.stringify(out, null, 2) + "\n");
+    writeAtomic(file, JSON.stringify(out, null, 2) + "\n");
     return { changed: true, clashes: [] };
   }
 
-  const text = readFileSync(file, "utf8");
+  const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
   let data: unknown;
   try {
     data = JSON.parse(text);
@@ -67,7 +73,7 @@ export function writeScripts(
   let changed = existing === undefined && Object.keys(scripts).length > 0;
   const clashes: string[] = [];
   for (const [name, command] of Object.entries(scripts)) {
-    const found = current[name];
+    const found = Object.hasOwn(current, name) ? current[name] : undefined;
     if (found === command) continue;
     if (found === undefined || (typeof found === "string" && found.includes(owned))) {
       current[name] = command;
@@ -80,6 +86,6 @@ export function writeScripts(
 
   pkg.scripts = current;
   const eol = text.endsWith("\n") ? "\n" : "";
-  writeFileSync(file, JSON.stringify(pkg, null, detectIndent(text)) + eol);
+  writeAtomic(file, JSON.stringify(pkg, null, detectIndent(text)) + eol);
   return { changed: true, clashes };
 }

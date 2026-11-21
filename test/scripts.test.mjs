@@ -166,3 +166,18 @@ test("invalid JSON or non-object throws naming the path and leaves the file", ()
     );
   }
 });
+
+test("a package.json with a leading BOM is read", () => {
+  project({ bun: "1.3.0" }, { "package.json": '﻿{"name":"x"}\n' }, call("bun"), (out, root) => {
+    assert.equal(out.changed, true);
+    assert.equal(pkg(root).name, "x");
+  });
+});
+
+test("a script named like an Object.prototype member is not a clash", () => {
+  const body = `return lib.writeScripts(root, "bun", { constructor: "bunx x" }, "x");`;
+  project({ bun: "1.3.0" }, { "package.json": '{"name":"x"}\n' }, body, (out, root) => {
+    assert.deepEqual(out, { changed: true, clashes: [] });
+    assert.equal(Object.hasOwn(pkg(root).scripts, "constructor"), true);
+  });
+});

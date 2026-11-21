@@ -62,3 +62,8 @@ test("a real shell parses the text back into the same arguments", () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("an argument starting with = is quoted", () => {
+  assert.ok(toolCommandText("node", P, "0.6.0", ["=ls"]).endsWith(" '=ls'"));
+  assert.ok(toolCommandText("node", P, "0.6.0", ["--a=b"]).endsWith(" --a=b"));
+});
