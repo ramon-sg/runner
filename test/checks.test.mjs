@@ -60,9 +60,10 @@ test("checkRunner fails on an invalid file with the error message", () => {
 
 test("checkRunner ok when the effective runner is available", () => {
   const root = project({ runner: "bun" });
-  const checks = runChecks(root, ["bunx"]);
+  const checks = runChecks(root, ["bun"]);
   assert.deepEqual(checks.map((c) => c.status), ["ok"]);
-  assert.match(checks[0].detail, /bun/);
+  assert.match(checks[0].detail, /\(bun is available\)/);
+  assert.equal(runChecks(project({ runner: "bun" }), ["bunx"])[0].status, "fail");
   const node = runChecks(project({ runner: "node" }), ["npx"]);
   assert.deepEqual(node.map((c) => c.status), ["ok"]);
   assert.match(node[0].detail, /node/);

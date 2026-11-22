@@ -31,7 +31,7 @@ export function checkRunner(root: string): Check[] {
   if ("error" in result) return [check("fail", result.error)];
   if (result.config === null) return [check("warn", `${RUNNER_FILE} is missing`)];
   const runner = effectiveRunner(result.config);
-  const exe = runner === "bun" ? "bunx" : "npx";
+  const exe = runner === "bun" ? "bun" : "npx";
   if (runnerAvailable(runner)) return [check("ok", `runner "${runner}" (${exe} is available)`)];
   const install = runner === "bun" ? "Bun" : "Node.js (npx)";
   return [check("fail", `runner "${runner}" needs ${exe}, which is not available: install ${install}`)];

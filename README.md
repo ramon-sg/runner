@@ -1,6 +1,6 @@
 Lee `.agents/runner.json` y arma el comando para correr cada herramienta con Bun o Node
 
-Una librería sin dependencias para las herramientas de `@ramon-sg` que se corren con `bunx --bun` o `npx --yes`: guarda en el repo qué runner usar y qué versión de cada herramienta, y construye el comando exacto.
+Una librería sin dependencias para las herramientas de `@ramon-sg` que se corren con `bun x --bun` o `npx --yes`: guarda en el repo qué runner usar y qué versión de cada herramienta, y construye el comando exacto.
 
 ## El archivo
 
@@ -30,10 +30,10 @@ Una librería sin dependencias para las herramientas de `@ramon-sg` que se corre
 - `writeRunnerConfig(root, config)`: escribe el archivo con formato estable y de forma atómica; lanza `TypeError` si `config` no es válida.
 - `effectiveRunner(config)`: el runner que se usa, con el valor por defecto si falta.
 - `runnerAvailable(runner)`: si ese runner está instalado en la máquina.
-- `chooseRunner({ ask })`: devuelve `"bun"` si `bunx` está disponible; si no, pregunta con `ask` si se pasó (`null` = el usuario eligió salir); sin `ask` devuelve `"node"` junto con `NO_BUN_WARNING`.
+- `chooseRunner({ ask })`: devuelve `"bun"` si `bun` está disponible; si no, pregunta con `ask` si se pasó (`null` = el usuario eligió salir); sin `ask` devuelve `"node"` junto con `NO_BUN_WARNING`.
 - `NO_BUN_WARNING`: el aviso que acompaña a `"node"` cuando no hay Bun.
 - `setTool(config, pkg, version, { ifMissing, allowLower })`: fija la versión de una herramienta, sin bajarla salvo que se pida.
-- `toolCommand(runner, pkg, version, args)`: el comando como lista de argumentos.
+- `toolCommand(runner, pkg, version, args)`: el comando como lista de argumentos. Con Bun usa `bun x --bun`, no `bunx`: el `bunx` del plugin de asdf es un script `bun x $@` sin comillas que parte los argumentos con espacios.
 - `toolCommandText(runner, pkg, version, args)`: el mismo comando como texto para mostrar o poner en un script.
 - `writeScripts(root, runner, scripts, owned)`: escribe los scripts de `package.json` que le pertenecen a la herramienta.
 - `checkRunner(root)`: revisa que el runner del archivo esté disponible.

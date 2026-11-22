@@ -4,9 +4,9 @@ import type { Runner } from "./config.js";
 export const NO_BUN_WARNING =
   'Bun is not installed: the tools will run with Node (npx). Install Bun and set "runner": "bun" in .agents/runner.json to change it.';
 
-/** Whether the executable behind a runner (`bunx` or `npx`) is installed and runs. */
+/** Whether the executable behind a runner (`bun` or `npx`) is installed and runs. */
 export function runnerAvailable(runner: Runner): boolean {
-  const result = spawnSync(runner === "bun" ? "bunx" : "npx", ["--version"], {
+  const result = spawnSync(runner === "bun" ? "bun" : "npx", ["--version"], {
     stdio: "ignore",
     timeout: 15_000,
   });
