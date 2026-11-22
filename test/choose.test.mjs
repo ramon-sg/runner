@@ -30,8 +30,9 @@ console.log(JSON.stringify(out));`;
   }
 }
 
-test("runnerAvailable bun needs bunx", () => {
-  assert.equal(run(["bunx"], `return lib.runnerAvailable("bun");`), true);
+test("runnerAvailable bun needs bun, not bunx", () => {
+  assert.equal(run(["bun"], `return lib.runnerAvailable("bun");`), true);
+  assert.equal(run(["bunx"], `return lib.runnerAvailable("bun");`), false);
   assert.equal(run([], `return lib.runnerAvailable("bun");`), false);
 });
 
@@ -42,7 +43,7 @@ test("runnerAvailable node needs npx", () => {
 
 test("with Bun it picks bun and never asks", () => {
   const out = run(
-    ["bun", "bunx"],
+    ["bun"],
     `let called = false;
      const r = await lib.chooseRunner({ ask: async () => { called = true; return "node"; } });
      return { r, called };`,

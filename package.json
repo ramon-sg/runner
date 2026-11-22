@@ -1,6 +1,6 @@
 {
   "name": "@ramon-sg/runner",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lee `.agents/runner.json` y arma el comando para correr cada herramienta con Bun o Node",
   "license": "MIT",
   "type": "module",

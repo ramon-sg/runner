@@ -9,9 +9,10 @@ import {
   readRunnerConfig,
   writeRunnerConfig,
   effectiveRunner,
+  VERSION,
 } from "../dist/index.js";
 
-const SCHEMA = "https://cdn.jsdelivr.net/npm/@ramon-sg/runner@1.0.0/runner.schema.json";
+const SCHEMA = `https://cdn.jsdelivr.net/npm/@ramon-sg/runner@${VERSION}/runner.schema.json`;
 
 function tmp() {
   return mkdtempSync(join(tmpdir(), "runner-config-"));

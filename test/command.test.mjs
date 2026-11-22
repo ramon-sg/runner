@@ -8,10 +8,10 @@ import { toolCommand, toolCommandText } from "../dist/index.js";
 
 const P = "@ramon-sg/issue-flow";
 
-test("bun uses bunx --bun", () => {
+test("bun uses bun x --bun, not the bunx shim", () => {
   assert.deepEqual(toolCommand("bun", P, "0.6.0", ["issue", "start"]), {
-    file: "bunx",
-    args: ["--bun", `${P}@0.6.0`, "issue", "start"],
+    file: "bun",
+    args: ["x", "--bun", `${P}@0.6.0`, "issue", "start"],
   });
 });
 
@@ -23,20 +23,20 @@ test("node uses npx --yes", () => {
 });
 
 test("no args gives only the package", () => {
-  assert.deepEqual(toolCommand("bun", P, "0.6.0").args, ["--bun", `${P}@0.6.0`]);
+  assert.deepEqual(toolCommand("bun", P, "0.6.0").args, ["x", "--bun", `${P}@0.6.0`]);
 });
 
 test("text joins plain arguments", () => {
   assert.equal(
     toolCommandText("bun", "@ramon-sg/github-rest", "0.7.0", ["pr", "view", "12"]),
-    "bunx --bun @ramon-sg/github-rest@0.7.0 pr view 12",
+    "bun x --bun @ramon-sg/github-rest@0.7.0 pr view 12",
   );
 });
 
 test("text quotes unsafe arguments", () => {
   assert.equal(
     toolCommandText("bun", P, "0.6.0", ["--title", "Fix it's broken"]),
-    `bunx --bun ${P}@0.6.0 --title 'Fix it'\\''s broken'`,
+    `bun x --bun ${P}@0.6.0 --title 'Fix it'\\''s broken'`,
   );
 });
 
@@ -49,15 +49,15 @@ test("a real shell parses the text back into the same arguments", () => {
   try {
     writeFileSync(join(dir, "print.mjs"), "console.log(JSON.stringify(process.argv.slice(2)));\n");
     writeFileSync(
-      join(dir, "bunx"),
+      join(dir, "bun"),
       `#!/bin/sh\nexec "${process.execPath}" "${join(dir, "print.mjs")}" "$@"\n`,
     );
-    chmodSync(join(dir, "bunx"), 0o755);
+    chmodSync(join(dir, "bun"), 0o755);
     const args = ["--title", "Fix it's broken", "", "a b", "$HOME", "x;y"];
     const out = execFileSync("sh", ["-c", toolCommandText("bun", P, "0.6.0", args)], {
       env: { ...process.env, PATH: `${dir}:${process.env.PATH}` },
     }).toString();
-    assert.deepEqual(JSON.parse(out), ["--bun", `${P}@0.6.0`, ...args]);
+    assert.deepEqual(JSON.parse(out), ["x", "--bun", `${P}@0.6.0`, ...args]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

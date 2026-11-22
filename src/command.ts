@@ -10,7 +10,9 @@ function shellQuote(argument: string): string {
 
 /**
  * The executable and arguments that run a pinned tool with the given runner:
- * `bunx --bun pkg@version ...` or `npx --yes pkg@version ...`.
+ * `bun x --bun pkg@version ...` or `npx --yes pkg@version ...`.
+ * Uses `bun x` rather than `bunx`: some installs (asdf's Bun plugin) ship
+ * `bunx` as an unquoted `bun x $@` shell script that splits arguments.
  * Does not validate `pkg` or `version`.
  */
 export function toolCommand(
@@ -21,7 +23,7 @@ export function toolCommand(
 ): { file: string; args: string[] } {
   const spec = `${pkg}@${version}`;
   return runner === "bun"
-    ? { file: "bunx", args: ["--bun", spec, ...args] }
+    ? { file: "bun", args: ["x", "--bun", spec, ...args] }
     : { file: "npx", args: ["--yes", spec, ...args] };
 }
 
